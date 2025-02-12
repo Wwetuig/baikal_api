@@ -1,0 +1,40 @@
+# Virtual Environment
+.venv/
+venv/
+
+# Byte-compiled / cached
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# PyCharm files
+.idea/
+*.iml
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Logs and local environment settings
+*.log
+.env
+.env.*
+*.ini
+*.cfg
+*.local
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Python dependency files (optional, if using poetry)
+poetry.lock
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Coverage reports
+.coverage
+htmlcov/
+
+
+api_env/
