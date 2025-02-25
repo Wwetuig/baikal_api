@@ -11,23 +11,9 @@ Base.metadata.create_all(bind=engine)
 # Создание FastAPI приложения
 app = FastAPI()
 
-# Роут для проверки подключения к базе данных
-@app.get("/check_db")
-async def check_db(db: Session = Depends(get_db)):
-    try:
-        # Простой запрос для проверки подключения
-        result = db.execute(text("SELECT 1")).fetchall()
-        if result:
-            return {"status": "success", "message": "Database connection is successful"}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to verify database connection")
-    except Exception as e:
-        # Логируем подробную информацию об ошибке
-        raise HTTPException(status_code=500, detail=f"Error connecting to database: {str(e)}")
-
-#роут для получения конкретного объекта из бд по параметрам
-@app.get('/file')
-async def read_concrete_file(data_type_id: int,
+#роут для получения ссылки конкретного объекта из бд по параметрам
+@app.get('/file', tags=['File'])
+async def find_the_link_to_a_specific_file(data_type_id: int,
                              measured_parameters_id: int,
                              measuring_devices_id: int,
                              years_id: int,
