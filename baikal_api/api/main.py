@@ -1,15 +1,30 @@
 from sqlalchemy import text
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
+from starlette.middleware.cors import CORSMiddleware
 
 from database import Base, engine, get_db
 from models import First_sputnik_data, Second_sputnik_data, Third_sputnik_data
+
 
 # Создание таблиц в базе данных (если они не существуют)
 Base.metadata.create_all(bind=engine)
 
 # Создание FastAPI приложения
 app = FastAPI()
+
+#CORS Configuring
+origins = [
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 #роут для получения ссылки конкретного объекта из бд по параметрам
 @app.get('/file', tags=['File'])
