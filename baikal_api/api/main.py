@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
 
 from database import Base, engine, get_db
-from models import First_sputnik_data, Second_sputnik_data, Third_sputnik_data
-
+from models import First_sputnik_data, Second_sputnik_data, Third_sputnik_data, Measuring_devices, Measured_parameters, \
+    Data_type
 
 # Создание таблиц в базе данных (если они не существуют)
 Base.metadata.create_all(bind=engine)
@@ -16,6 +16,7 @@ app = FastAPI()
 #CORS Configuring
 origins = [
     "http://localhost:3000",
+    "127.0.0.1:3000",
 ]
 
 app.add_middleware(
@@ -34,8 +35,11 @@ async def find_the_link_to_a_specific_file(data_type_id: int,
                              years_id: int,
                              month_id: int,
                              day_id: int,
-                             num: int,
+                             lst_num: int,
                              db: Session = Depends(get_db)):
+
+
+
     try:
         for f in (First_sputnik_data, Second_sputnik_data, Third_sputnik_data):
             file = db.query(f).filter(
