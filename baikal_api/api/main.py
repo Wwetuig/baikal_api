@@ -39,23 +39,24 @@ async def find_the_link_to_a_specific_file(data_type: str,
                              lst_num: int,
                              db: Session = Depends(get_db)):
 
-#dictionaries
+#dictionaries  {parameter_from_the_frontend: real_name_in_the_database}
     type_dict = {
-        "s": "sputnik",
-        "n": "nazem"
+        "Озеро Байкал": "Спутниковые данные",
+        "Байкальская природная территория": "Спутниковые данные",
+        "Наземные Данные": "Наземные данные",
     }
 
     devices_dict = {
-        "v": "VIIRS",
-        "l": "Landsat-8",
-        "t": "MODIS/Terra",
-        "a": "aqua"
+        "VIIRS": "VIIRS",
+        "LANDSAT": "Landsat-8",
+        "MODIS Terra": "MODIS/Terra",
+        "MODIS Aqua": "Aqua"
     }
 
     parameters_dict = {
-        "p": "Prozrachnost",
-        "l": "lst temperature",
-        "c": "chlorofill A"
+        "Прозрачность": "Прозрачность",
+        "LST": "Отдельные снимки температуры",
+        "Хлорофилл": "Хлорофилл А"
     }
 
     # get data_type_id
