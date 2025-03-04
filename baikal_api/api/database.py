@@ -2,10 +2,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from decouple import config
+from dotenv import load_dotenv
+import os
+
+# Загружаем переменные из .env файла
+load_dotenv()
 
 # Настройки подключения к базе данных
-DATABASE_URL = config("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Инициализация SQLAlchemy
 Base = declarative_base()
