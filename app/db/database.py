@@ -5,11 +5,10 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
 
-# Загружаем переменные из .env файла
-load_dotenv()
+from core import config
 
 # Настройки подключения к базе данных
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = config.DATABASE_URL
 
 # Инициализация SQLAlchemy
 Base = declarative_base()
