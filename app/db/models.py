@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float
-from database import Base
+
+from db.database import Base
+
 
 # Определение модели таблицы
 class First_sputnik_data(Base):

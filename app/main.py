@@ -1,11 +1,9 @@
-from sqlalchemy import text
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse
 
-from database import Base, engine, get_db
-from models import First_sputnik_data, Second_sputnik_data, Third_sputnik_data, Measuring_devices, Measured_parameters, \
+from db.database import Base, engine, get_db
+from db.models import First_sputnik_data, Second_sputnik_data, Third_sputnik_data, Measuring_devices, Measured_parameters, \
     Data_type
 
 # Создание таблиц в базе данных (если они не существуют)
