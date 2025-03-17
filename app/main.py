@@ -6,8 +6,6 @@ from db.CRUD import get_link
 from db.database import Base, engine, get_db
 
 
-# Создание таблиц в базе данных (если они не существуют)
-Base.metadata.create_all(bind=engine)
 
 # Создание FastAPI приложения
 app = FastAPI()

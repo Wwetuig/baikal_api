@@ -2,6 +2,8 @@ from sqlalchemy import Column, Integer, String, Float
 
 from db.database import Base
 
+from db.database import engine
+
 
 # Определение модели таблицы
 class First_sputnik_data(Base):
@@ -76,3 +78,6 @@ class Measured_parameters(Base):
     name_indicator = Column(String, index=True)
     description = Column(String, index=True)
     units_measurement_id = Column(Integer, index=True)
+
+# Создание таблиц в базе данных (если они не существуют)
+Base.metadata.create_all(bind=engine)
