@@ -4,10 +4,14 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from db.models import First_sputnik_data, Second_sputnik_data, Third_sputnik_data
 
-from db.models import Data_type, Measuring_devices, Measured_parameters
+from db.models import Data_type, Measuring_devices, Measured_parameters, User
+
+from schemas.schemas import UserCreate
+
+from core.security import hash_password
 
 
-def get_link(data_type: str,
+async def get_link(data_type: str,
              measured_parameter: str,
              measuring_device: str,
              years_id: int,
@@ -87,3 +91,21 @@ def get_link(data_type: str,
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching file: {str(e)}")
+
+
+def get_user_by_login(login: str, db: Session = Depends(get_db)):
+    return db.query(User).filter(User.login == login).first()
+
+
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = User(login = user.login,
+                   password = hash_password(user.password),
+                   fio=user.fio,
+                   mail=user.mail,
+                   phone_number=user.phone_number)
+
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
