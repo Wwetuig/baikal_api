@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, Date, Boolean, func
 
 from db.database import Base
 
@@ -78,6 +78,23 @@ class Measured_parameters(Base):
     name_indicator = Column(String, index=True)
     description = Column(String, index=True)
     units_measurement_id = Column(Integer, index=True)
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    fio = Column(String, index=True)
+    password = Column(String, index=True)
+    roles_id = Column(Integer, index=True)
+    login = Column(String, index=True)
+    mail = Column(String, index=True)
+    date_created = Column(Date, default=func.current_date())
+    locked = Column(Boolean, index=True)
+    phone_number = Column(String, index=True)
+    active = Column(Boolean, index=True)
+    foto = Column(String, index=True)
+
+
 
 # Создание таблиц в базе данных (если они не существуют)
 Base.metadata.create_all(bind=engine)
