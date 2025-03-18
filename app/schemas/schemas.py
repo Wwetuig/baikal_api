@@ -2,20 +2,22 @@ from pydantic import BaseModel
 
 
 class UserCreate(BaseModel):
-    username: str
-    email: str
+    fio: str
     password: str
+    login: str
+    mail: str
+    phone_number: str
 
 
 class UserOut(BaseModel):
     id: int
-    username: str
-    email: str
+    login: str
+    mail: str
 
     class Config:
         from_attributes = True
 
 
 class UserLogin(BaseModel):
-    username: str
+    login: str
     password: str
