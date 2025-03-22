@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime, timezone
-from http.client import HTTPException
+from fastapi import HTTPException
 from typing import Optional
 
 from jose import jwt
@@ -9,11 +9,13 @@ from passlib.context import CryptContext
 
 from core.config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
 
+from starlette import status
+
 # Инициализация контекста для хеширования паролей
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 #объект oauth2_scheme для реализации механизма аутентификации с использованием OAuth 2.0
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/token")
 
 
 #хеширование пароля

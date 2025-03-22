@@ -1,3 +1,5 @@
+from itertools import chain
+
 from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session
 
@@ -11,7 +13,7 @@ from schemas.schemas import UserCreate
 from core.security import hash_password
 
 
-async def get_link(data_type: str,
+def get_link(data_type: str,
              measured_parameter: str,
              measuring_device: str,
              years_id: int,
@@ -92,6 +94,13 @@ async def get_link(data_type: str,
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching file: {str(e)}")
 
+def get_all_sputnik_data(db: Session = Depends(get_db)):
+    first_sputnik_data_list = db.query(First_sputnik_data).all()
+    second_sputnik_data_list = db.query(Second_sputnik_data).all()
+    third_sputnik_data_list = db.query(Third_sputnik_data).all()
+
+    result = list(chain(first_sputnik_data_list, second_sputnik_data_list, third_sputnik_data_list))
+    return result
 
 def get_user_by_login(login: str, db: Session = Depends(get_db)):
     return db.query(User).filter(User.login == login).first()

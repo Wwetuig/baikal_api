@@ -8,6 +8,10 @@ from db.CRUD import get_user_by_login, create_user
 from db.database import get_db
 from schemas.schemas import UserOut, UserCreate
 
+from core.security import oauth2_scheme
+
+from core.security import verify_token
+
 user_router = APIRouter()
 @user_router.post('/register', response_model=UserOut)
 async def register_new_user(user: UserCreate, db: Session = Depends(get_db)):
@@ -32,6 +36,10 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         )
 
     # Генерация токена
-    access_token = create_access_token(data={"sub": {'id': user.id, 'login': user.login}})
+    access_token = create_access_token(data={"sub": user.login})
+
     return {"token_type": "bearer", "access_token": access_token}
 
+@user_router.get("/profile")
+async def protected_endpoint(token: str = Depends(oauth2_scheme)):
+    return verify_token(token)
