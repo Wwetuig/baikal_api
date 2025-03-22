@@ -1,9 +1,8 @@
 from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from dotenv import load_dotenv
-import os
 
 from core import config
 
@@ -12,13 +11,10 @@ DATABASE_URL = config.DATABASE_URL
 
 # Инициализация SQLAlchemy
 Base = declarative_base()
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_async_engine(DATABASE_URL, echo=True)
+AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-# Получение сессии базы данных
-def get_db():
-    db = SessionLocal()
-    try:
+# Получение асинхронной сессии базы данных
+async def get_db():
+    async with AsyncSessionLocal() as db:
         yield db
-    finally:
-        db.close()

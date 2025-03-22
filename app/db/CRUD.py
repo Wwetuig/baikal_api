@@ -1,6 +1,8 @@
 from itertools import chain
 
 from fastapi import HTTPException, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from db.database import get_db
@@ -12,109 +14,180 @@ from schemas.schemas import UserCreate
 
 from core.security import hash_password
 
+from core.utils import get_mapping_dicts
 
-def get_link(data_type: str,
+
+# Асинхронная функция для получения data_type_id
+async def get_data_type_id(db: AsyncSession, data_type: str, type_dict: dict):
+    try:
+
+        # Создаем запрос с помощью select
+        query = select(Data_type).where(
+            Data_type.type == type_dict[data_type]
+        )
+
+        # Выполняем запрос
+        result = await db.execute(query)
+
+        # Получаем первый результат
+        data_type_obj = result.scalars().first()
+
+        if not data_type_obj:
+            raise HTTPException(status_code=404, detail="Device not found")
+
+        data_type_id = data_type_obj.id
+        return data_type_id
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cant find data type id: {str(e)}")
+
+# Асинхронная функция для получения device_id
+async def get_device_id(db: AsyncSession, measuring_device: str, devices_dict: dict):
+    try:
+        # Создаем запрос с помощью select
+        query = select(Measuring_devices).where(
+            Measuring_devices.name_source == devices_dict[measuring_device]
+        )
+
+        # Выполняем запрос
+        result = await db.execute(query)
+
+        # Получаем первый результат
+        device_obj = result.scalars().first()
+
+        if not device_obj:
+            raise HTTPException(status_code=404, detail="Device not found")
+
+        device_id = device_obj.id
+        return device_id
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cant find device id: {str(e)}")
+
+# Асинхронная функция для получения parameter_id
+async def get_parameter_id(db: AsyncSession, measured_parameter: str, parameters_dict: dict):
+    try:
+        # Создаем запрос с помощью select
+        query = select(Measured_parameters).where(
+            Measured_parameters.name_indicator == parameters_dict[measured_parameter]
+        )
+
+        # Выполняем запрос
+        result = await db.execute(query)
+
+        # Получаем первый результат
+        parameter_obj = result.scalars().first()
+
+        if not parameter_obj:
+            raise HTTPException(status_code=404, detail="Parameter not found")
+
+        parameter_id = parameter_obj.id
+        return parameter_id
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cant find parameter id: {str(e)}")
+
+
+async def get_link(data_type: str,
              measured_parameter: str,
              measuring_device: str,
              years_id: int,
              month_id: int,
              day_id: int,
              lst_num: int,
-             db: Session = Depends(get_db)):
-    # dictionaries  {parameter_from_the_frontend: real_name_in_the_database}
-    type_dict = {
-        "Озеро Байкал": "Спутниковые данные",
-        "Байкальская природная территория": "Спутниковые данные",
-        "Наземные Данные": "Наземные данные",
-    }
+             db: AsyncSession = Depends(get_db),
+             mapping_dicts: dict = Depends(get_mapping_dicts)
+):
+    # Доступ к словарям
+    devices_dict = mapping_dicts["devices_dict"]
+    parameters_dict = mapping_dicts["parameters_dict"]
+    type_dict = mapping_dicts["type_dict"]
 
-    devices_dict = {
-        "VIIRS": "VIIRS",
-        "LANDSAT": "Landsat-8",
-        "MODIS Terra": "MODIS/Terra",
-        "MODIS Aqua": "Aqua"
-    }
-
-    parameters_dict = {
-        "Прозрачность": "Прозрачность",
-        "LST": "Отдельные снимки температуры",
-        "Хлорофилл": "Хлорофилл А"
-    }
 
     # get data_type_id
-    try:
-        data_type_obj = (db.query(Data_type).filter(
-            Data_type.type == type_dict[data_type],
-        ).first())
+    data_type_id = await get_data_type_id(db, data_type, type_dict)
 
-        data_type_id = data_type_obj.id
+    # Получаем device_id
+    device_id = await get_device_id(db, measuring_device, devices_dict)
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Cant find type id: {str(e)}")
-
-    # get device_id
-    try:
-        device_obj = db.query(Measuring_devices).filter(
-            Measuring_devices.name_source == devices_dict[measuring_device],
-        ).first()
-
-        device_id = device_obj.id
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Cant find device id: {str(e)}")
-
-    # get parameter_id
-    try:
-        parameter_obj = db.query(Measured_parameters).filter(
-            Measured_parameters.name_indicator == parameters_dict[measured_parameter],
-        ).first()
-
-        parameter_id = parameter_obj.id
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Cant find parameter id: {str(e)}")
+    # Получаем parameter_id
+    parameter_id = await get_parameter_id(db, measured_parameter, parameters_dict)
 
     # main query: get link of specific file
     try:
         for f in (First_sputnik_data, Second_sputnik_data, Third_sputnik_data):
-            file = db.query(f).filter(
+            # Создаем запрос с помощью select
+            stmt = select(f).where(
                 f.measured_parameters_id == parameter_id,
                 f.data_type_id == data_type_id,
                 f.measuring_devices_id == device_id,
                 f.years_id == years_id,
                 f.month_id == month_id,
                 f.day_id == day_id,
-            ).first()
+            )
 
-            if (file):
-                break
+            # Выполняем запрос
+            result = await db.execute(stmt)
 
-        return {'link': file.link}
+            # Получаем первый результат
+            file = result.scalars().first()
+
+            if file:
+                return {'link': file.link}
+
+        # Если файл не найден ни в одной таблице
+        raise HTTPException(status_code=404, detail="File not found")
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error while searching for file: {str(e)}")
 
-def get_all_sputnik_data(db: Session = Depends(get_db)):
-    first_sputnik_data_list = db.query(First_sputnik_data).all()
-    second_sputnik_data_list = db.query(Second_sputnik_data).all()
-    third_sputnik_data_list = db.query(Third_sputnik_data).all()
+# Асинхронная функция для получения всех спктниковых данных
+async def get_all_sputnik_data(db: AsyncSession = Depends(get_db)):
+    result_first = await db.execute(select(First_sputnik_data))
+    first_sputnik_data_list = result_first.scalars().all()
 
-    result = list(chain(first_sputnik_data_list, second_sputnik_data_list, third_sputnik_data_list))
+    result_second = await db.execute(select(Second_sputnik_data))
+    second_sputnik_data_list = result_second.scalars().all()
+
+    result_third = await db.execute(select(Third_sputnik_data))
+    third_sputnik_data_list = result_third.scalars().all()
+
+    result = first_sputnik_data_list + second_sputnik_data_list + third_sputnik_data_list
     return result
 
-def get_user_by_login(login: str, db: Session = Depends(get_db)):
-    return db.query(User).filter(User.login == login).first()
+
+async def get_user_by_login(login: str, db: AsyncSession = Depends(get_db)):
+    # Создаем запрос с помощью select
+    stmt = select(User).where(User.login == login)
+
+    # Выполняем запрос
+    result = await db.execute(stmt)
+
+    # Получаем первый результат
+    user = result.scalars().first()
+    return user
 
 
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = User(login = user.login,
-                   password = hash_password(user.password),
-                   fio=user.fio,
-                   mail=user.mail,
-                   phone_number=user.phone_number)
+async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
+    # Проверяем, существует ли пользователь с таким логином
+    stmt = select(User).where(User.login == user.login)
+    result = await db.execute(stmt)
+    existing_user = result.scalars().first()
 
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User with this login already exists")
+
+    # Создаем нового пользователя
+    db_user = User(
+        login=user.login,
+        password=hash_password(user.password),
+        fio=user.fio,
+        mail=user.mail,
+        phone_number=user.phone_number
+    )
+
+    # Добавляем пользователя в базу данных
     db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    await db.commit()
+    await db.refresh(db_user)
     return db_user
-

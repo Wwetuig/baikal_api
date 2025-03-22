@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -14,19 +15,18 @@ from core.security import verify_token
 
 user_router = APIRouter()
 @user_router.post('/register', response_model=UserOut)
-async def register_new_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = get_user_by_login(user.login, db)
-    print('login: '+ user.login)
-    print(db_user)
+async def register_new_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
+    db_user = await get_user_by_login(user.login, db)
+
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
-    return create_user(user, db)
+    return await create_user(user, db)
 
 # Авторизация пользователя. Эндпоинт для получения токена
 @user_router.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
 
-    user = get_user_by_login(form_data.username, db)
+    user = await get_user_by_login(form_data.username, db)
 
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(

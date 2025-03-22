@@ -1,3 +1,5 @@
+import asyncio
+
 from sqlalchemy import Column, Integer, String, Float, Date, Boolean, func
 
 from db.database import Base
@@ -97,4 +99,13 @@ class User(Base):
 
 
 # Создание таблиц в базе данных (если они не существуют)
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
+
+'''
+# Асинхронная функция для создания таблиц
+async def create_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+# Запуск создания таблиц
+asyncio.run(create_tables())
+'''
