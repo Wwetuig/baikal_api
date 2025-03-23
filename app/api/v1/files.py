@@ -8,11 +8,11 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 
-from db.CRUD import get_all_sputnik_data
-
-from schemas.schemas import SputnikDataResponse
-
 from core.utils import get_mapping_dicts
+
+from db.CRUD import get_all_first_sputnik_data, get_all_second_sputnik_data, get_all_third_sputnik_data
+
+from schemas.schemas import FirstSputnikDataResponse, SecondSputnikDataResponse, ThirdSputnikDataResponse
 
 files_router = APIRouter()
 
@@ -39,7 +39,17 @@ async def find_the_link_to_a_specific_file(data_type: str,
 
     return response
 
-@files_router.get('/sputnik_data', response_model=list[SputnikDataResponse])
-async def get_sputnik_data(db: AsyncSession = Depends(get_db)):
-    response = await get_all_sputnik_data(db)
+@files_router.get('/first_sputnik_data', response_model=list[FirstSputnikDataResponse])
+async def get_first_sputnik_data(db: AsyncSession = Depends(get_db)):
+    response = await get_all_first_sputnik_data(db)
+    return response
+
+@files_router.get('/second_sputnik_data', response_model=list[SecondSputnikDataResponse])
+async def get_second_sputnik_data(db: AsyncSession = Depends(get_db)):
+    response = await get_all_second_sputnik_data(db)
+    return response
+
+@files_router.get('/third_sputnik_data', response_model=list[ThirdSputnikDataResponse])
+async def get_third_sputnik_data(db: AsyncSession = Depends(get_db)):
+    response = await get_all_third_sputnik_data(db)
     return response

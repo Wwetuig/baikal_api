@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 
 from pydantic import BaseModel
@@ -25,7 +26,7 @@ class UserLogin(BaseModel):
     password: str
 
 
-class SputnikDataCreate(BaseModel):
+class FirstSputnikDataCreate(BaseModel):
     link: str
     description: Optional[str] = None
     measured_parameters_id: int
@@ -37,7 +38,44 @@ class SputnikDataCreate(BaseModel):
     times_day_id: int
     data_type_id: int
 
-class SputnikDataResponse(SputnikDataCreate):
+class FirstSputnikDataResponse(FirstSputnikDataCreate):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class SecondSputnikDataCreate(BaseModel):
+    link: str
+    description: Optional[str] = None
+    measured_parameters_id: int
+    measuring_devices_id: int
+    month_id: int
+    file_number: int
+    times_day_id: int
+    data_type_id: int
+
+class SecondSputnikDataResponse(SecondSputnikDataCreate):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ThirdSputnikDataCreate(BaseModel):
+    link: str
+    description: Optional[str] = None
+    measured_parameters_id: int
+    measuring_devices_id: int
+    month_id: int
+    file_number: int
+    times_day_id: int
+    data_type_id: int
+    #splitting date_range to start_date and end_date
+    start_date: date
+    end_date: date
+
+class ThirdSputnikDataResponse(ThirdSputnikDataCreate):
     id: int
 
     class Config:

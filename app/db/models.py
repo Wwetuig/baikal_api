@@ -1,5 +1,7 @@
 import asyncio
 
+from sqlalchemy.dialects.postgresql import DATERANGE
+
 from sqlalchemy import Column, Integer, String, Float, Date, Boolean, func
 
 from db.database import Base
@@ -7,9 +9,11 @@ from db.database import Base
 from db.database import engine
 
 
+
 # Определение модели таблицы
 class First_sputnik_data(Base):
     __tablename__ = "first_sputnik_data"
+    __table_args__ = {"schema": "knowledgebase"}
 
     id = Column(Integer, primary_key=True, index=True)
     link = Column(String, index=True)
@@ -25,6 +29,7 @@ class First_sputnik_data(Base):
 
 class Second_sputnik_data(Base):
     __tablename__ = "second_sputnik_data"
+    __table_args__ = {"schema": "knowledgebase"}
 
     id = Column(Integer, primary_key=True, index=True)
     link = Column(String, index=True)
@@ -33,13 +38,13 @@ class Second_sputnik_data(Base):
     measuring_devices_id = Column(Integer, index=True)
     month_id = Column(Integer, index=True)
     years_id = Column(Integer, index=True)
-    day_id = Column(Integer, index=True)
     file_number = Column(Integer, index=True)
     times_day_id = Column(Integer, index=True)
     data_type_id = Column(Integer, index=True)
 
 class Third_sputnik_data(Base):
     __tablename__ = "third_sputnik_data"
+    __table_args__ = {"schema": "knowledgebase"}
 
     id = Column(Integer, primary_key=True, index=True)
     link = Column(String, index=True)
@@ -47,14 +52,14 @@ class Third_sputnik_data(Base):
     measured_parameters_id = Column(Integer, index=True)
     measuring_devices_id = Column(Integer, index=True)
     month_id = Column(Integer, index=True)
-    years_id = Column(Integer, index=True)
-    day_id = Column(Integer, index=True)
     file_number = Column(Integer, index=True)
     times_day_id = Column(Integer, index=True)
     data_type_id = Column(Integer, index=True)
+    date_range = Column(DATERANGE, index=True)
 
 class Data_type(Base):
     __tablename__ = "data_type"
+    __table_args__ = {"schema": "knowledgebase"}
 
     id = Column(Integer, primary_key=True, index=True)
     type = Column(String, index=True)
@@ -62,6 +67,7 @@ class Data_type(Base):
 
 class Measuring_devices(Base):
     __tablename__ = "measuring_devices"
+    __table_args__ = {"schema": "knowledgebase"}
 
     id = Column(Integer, primary_key=True, index=True)
     name_source = Column(String, index=True)
@@ -75,6 +81,7 @@ class Measuring_devices(Base):
 
 class Measured_parameters(Base):
     __tablename__ = "measured_parameters"
+    __table_args__ = {"schema": "knowledgebase"}
 
     id = Column(Integer, primary_key=True, index=True)
     name_indicator = Column(String, index=True)
@@ -83,6 +90,7 @@ class Measured_parameters(Base):
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = {"schema": "users"}
 
     id = Column(Integer, primary_key=True, index=True)
     fio = Column(String, index=True)

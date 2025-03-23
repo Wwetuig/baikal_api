@@ -142,18 +142,24 @@ async def get_link(data_type: str,
         raise HTTPException(status_code=500, detail=f"Error while searching for file: {str(e)}")
 
 # Асинхронная функция для получения всех спктниковых данных
-async def get_all_sputnik_data(db: AsyncSession = Depends(get_db)):
+async def get_all_first_sputnik_data(db: AsyncSession = Depends(get_db)):
     result_first = await db.execute(select(First_sputnik_data))
     first_sputnik_data_list = result_first.scalars().all()
 
+    return first_sputnik_data_list
+
+async def get_all_second_sputnik_data(db: AsyncSession = Depends(get_db)):
     result_second = await db.execute(select(Second_sputnik_data))
     second_sputnik_data_list = result_second.scalars().all()
 
+    return  second_sputnik_data_list
+
+
+async def get_all_third_sputnik_data(db: AsyncSession = Depends(get_db)):
     result_third = await db.execute(select(Third_sputnik_data))
     third_sputnik_data_list = result_third.scalars().all()
 
-    result = first_sputnik_data_list + second_sputnik_data_list + third_sputnik_data_list
-    return result
+    return third_sputnik_data_list
 
 
 async def get_user_by_login(login: str, db: AsyncSession = Depends(get_db)):
