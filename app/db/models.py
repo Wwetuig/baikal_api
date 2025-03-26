@@ -1,12 +1,9 @@
-import asyncio
-
 from sqlalchemy.dialects.postgresql import DATERANGE
+from sqlalchemy import LargeBinary
 
 from sqlalchemy import Column, Integer, String, Float, Date, Boolean, func
 
 from db.database import Base
-
-from db.database import engine
 
 
 
@@ -94,7 +91,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     fio = Column(String, index=True)
-    password = Column(String, index=True)
+    password = Column("pass", String, index=True)
     roles_id = Column(Integer, index=True)
     login = Column(String, index=True)
     mail = Column(String, index=True)
@@ -102,18 +99,10 @@ class User(Base):
     locked = Column(Boolean, index=True)
     phone_number = Column(String, index=True)
     active = Column(Boolean, index=True)
-    foto = Column(String, index=True)
+    foto = Column(LargeBinary, index=True)
 
 
 
 # Создание таблиц в базе данных (если они не существуют)
 #Base.metadata.create_all(bind=engine)
 
-'''
-# Асинхронная функция для создания таблиц
-async def create_tables():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-# Запуск создания таблиц
-asyncio.run(create_tables())
-'''

@@ -24,4 +24,10 @@ app.add_middleware(
 app.include_router(users.user_router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(files.files_router, prefix="/api/v1/files", tags=["Files"])
 
+@app.get("/")
+async def read_root():
+    return {"framework": "FastAPI",
+            "message": "The API for BAIKAL Information System"
+            }
+
 

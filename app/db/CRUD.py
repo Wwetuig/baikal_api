@@ -1,9 +1,6 @@
-from itertools import chain
-
 from fastapi import HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
 from db.database import get_db
 from db.models import First_sputnik_data, Second_sputnik_data, Third_sputnik_data
@@ -189,7 +186,10 @@ async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
         password=hash_password(user.password),
         fio=user.fio,
         mail=user.mail,
-        phone_number=user.phone_number
+        phone_number=user.phone_number,
+        roles_id=user.roles_id,
+        locked=False,
+        active=False
     )
 
     # Добавляем пользователя в базу данных

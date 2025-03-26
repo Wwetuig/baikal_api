@@ -1,15 +1,6 @@
-#getting DataType
-from fastapi import HTTPException
-from sqlalchemy import select
-
-from db.models import Data_type, Measuring_devices, Measured_parameters
-from sqlalchemy.ext.asyncio import AsyncSession
-
-
 #маппинг словарей DI
-
-# Словари для маппинга
 #{parameter_from_the_frontend: real_name_in_the_database}
+
 type_dict = {
     "Озеро Байкал": "Спутниковые данные",
     "Байкальская природная территория": "Спутниковые данные",
