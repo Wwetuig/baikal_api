@@ -7,7 +7,7 @@ from db.models import First_sputnik_data, Second_sputnik_data, Third_sputnik_dat
 
 from db.models import Data_type, Measuring_devices, Measured_parameters, User
 
-from schemas.schemas import UserCreate
+from schemas.users import UserCreate
 
 from core.security import hash_password
 

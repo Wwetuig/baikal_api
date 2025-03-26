@@ -12,7 +12,7 @@ from core.utils import get_mapping_dicts
 
 from db.CRUD import get_all_first_sputnik_data, get_all_second_sputnik_data, get_all_third_sputnik_data
 
-from schemas.schemas import FirstSputnikDataResponse, SecondSputnikDataResponse, ThirdSputnikDataResponse
+from schemas.files import FirstSputnikDataResponse, SecondSputnikDataResponse, ThirdSputnikDataResponse
 
 files_router = APIRouter()
 

@@ -7,7 +7,7 @@ from starlette import status
 from core.security import verify_password, create_access_token
 from db.CRUD import get_user_by_login, create_user
 from db.database import get_db
-from schemas.schemas import UserOut, UserCreate
+from schemas.users import UserOut, UserCreate
 
 from core.security import oauth2_scheme
 
