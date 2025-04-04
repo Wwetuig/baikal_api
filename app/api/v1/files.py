@@ -1,6 +1,6 @@
 from typing import Dict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from db.CRUD import get_link
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +24,7 @@ async def find_the_link_to_a_specific_file(data_type: str,
                              years_id: int,
                              month_id: int,
                              day_id: int,
-                             lst_num: int,
+                             lst_num: int = Query(None),
                              db: AsyncSession = Depends(get_db),
                              mapping_dicts: dict = Depends(get_mapping_dicts)):
     response = await get_link(data_type,
@@ -39,6 +39,7 @@ async def find_the_link_to_a_specific_file(data_type: str,
 
     return response
 
+'''
 @files_router.get('/first_sputnik_data', response_model=list[FirstSputnikDataResponse])
 async def get_first_sputnik_data(db: AsyncSession = Depends(get_db)):
     response = await get_all_first_sputnik_data(db)
@@ -53,3 +54,4 @@ async def get_second_sputnik_data(db: AsyncSession = Depends(get_db)):
 async def get_third_sputnik_data(db: AsyncSession = Depends(get_db)):
     response = await get_all_third_sputnik_data(db)
     return response
+'''

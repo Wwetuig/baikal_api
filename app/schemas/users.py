@@ -9,9 +9,6 @@ class UserCreate(BaseModel):
     login: str
     mail: str
     phone_number: str
-    roles_id: int
-    locked: bool
-    active: bool
 
 
 class UserOut(BaseModel):

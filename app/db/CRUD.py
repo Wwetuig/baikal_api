@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -91,7 +91,7 @@ async def get_link(data_type: str,
              years_id: int,
              month_id: int,
              day_id: int,
-             lst_num: int,
+             lst_num: int = Query(None),
              db: AsyncSession = Depends(get_db),
              mapping_dicts: dict = Depends(get_mapping_dicts)
 ):
@@ -177,6 +177,8 @@ async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     result = await db.execute(stmt)
     existing_user = result.scalars().first()
 
+    default_role_id = 1  # unauthorized user
+
     if existing_user:
         raise HTTPException(status_code=400, detail="User with this login already exists")
 
@@ -187,7 +189,7 @@ async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
         fio=user.fio,
         mail=user.mail,
         phone_number=user.phone_number,
-        roles_id=user.roles_id,
+        roles_id=default_role_id,
         locked=False,
         active=False
     )
