@@ -91,7 +91,7 @@ async def get_link(data_type: str,
              years_id: int,
              month_id: int,
              day_id: int,
-             lst_num: int = Query(None),
+             lst_num: int,
              db: AsyncSession = Depends(get_db),
              mapping_dicts: dict = Depends(get_mapping_dicts)
 ):
