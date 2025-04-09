@@ -110,33 +110,35 @@ async def get_link(data_type: str,
     # Получаем parameter_id
     parameter_id = await get_parameter_id(db, measured_parameter, parameters_dict)
 
-    # main query: get link of specific file
     try:
-        for f in (First_sputnik_data, Second_sputnik_data, Third_sputnik_data):
+        if years_id == None or day_id == None:  #логика получени среднегодовых и среднемес ьез года и дня
+            raise HTTPException(status_code=404, detail=f"File not found")
+
+        else:
             # Создаем запрос с помощью select
-            stmt = select(f).where(
-                f.measured_parameters_id == parameter_id,
-                f.data_type_id == data_type_id,
-                f.measuring_devices_id == device_id,
-                f.years_id == years_id,
-                f.month_id == month_id,
-                f.day_id == day_id,
+            stmt = select(First_sputnik_data).where(
+                First_sputnik_data.measured_parameters_id == parameter_id,
+                First_sputnik_data.data_type_id == data_type_id,
+                First_sputnik_data.measuring_devices_id == device_id,
+                First_sputnik_data.years_id == years_id,
+                First_sputnik_data.month_id == month_id,
+                First_sputnik_data.day_id == day_id,
             )
+    except:
+        raise HTTPException(status_code=404, detail=f"File not found")
 
             # Выполняем запрос
-            result = await db.execute(stmt)
+    result = await db.execute(stmt)
 
             # Получаем первый результат
-            file = result.scalars().first()
+    file = result.scalars().first()
 
-            if file:
-                return {'link': file.link}
+    if file:
+        return file.link
+    else:
+        raise HTTPException(status_code=404, detail=f"File not found")
 
-        # Если файл не найден ни в одной таблице
-        raise HTTPException(status_code=404, detail="File not found")
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error while searching for file: {str(e)}")
 
 # Асинхронная функция для получения всех спктниковых данных
 async def get_all_first_sputnik_data(db: AsyncSession = Depends(get_db)):

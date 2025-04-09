@@ -57,30 +57,30 @@ async def get_tiles(data_type: str,
                     mapping_dicts: dict = Depends(get_mapping_dicts)):
     """Возвращает ссылку на директорию с нарезанными тайлами. """
 
-    dict = await get_link(data_type,
-                          measured_parameter,
-                          measuring_device,
-                          years_id,
-                          month_id,
-                          day_id,
-                          lst_num,
-                          db,
-                          mapping_dicts)
+    full_path = await get_link(data_type,
+                               measured_parameter,
+                               measuring_device,
+                               years_id,
+                               month_id,
+                               day_id,
+                               lst_num,
+                               db,
+                               mapping_dicts)
 
-    full_path = dict["link"]
 
-    # Извлечение имени файла без расширения
-    filename = full_path.split('/')[-1].split('.')[0]
+    try:
+        # Извлечение имени файла без расширения
+        filename = full_path.split('/')[-1].split('.')[0]
 
-    root_directory = r"/u/product/temperatura/landsat/june/2024"
-    target_directory = filename
+        root_directory = r"/u/product/temperatura/landsat/june/2024"
+        target_directory = filename
 
-    found_path = find_directory(root_directory, target_directory)
+        found_path = find_directory(root_directory, target_directory)
 
-    if not found_path:
-        raise HTTPException(status_code=404, detail="Directory not found")
+    except:
+        raise HTTPException(status_code=404, detail="the directory with tiles does not exist")
 
-    result = found_path + "/tiles/{z}/{x}/{-y}.png"
+    result = found_path + "/{z}/{x}/{-y}.png"
 
     return result
 
