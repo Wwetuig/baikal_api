@@ -30,6 +30,11 @@ def get_mapping_dicts():
         "parameters_dict": parameters_dict
     }
 
+def get_mapped_time_of_day_id():
+    return {"Дневные": 1,
+            "Ночные": 2,
+            "Суточные": 3}
+
 
 def find_directory(root_dir, target_dir):
     # Получаем список всех элементов в директории

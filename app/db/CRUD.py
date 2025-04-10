@@ -13,8 +13,107 @@ from core.security import hash_password
 
 from core.utils import get_mapping_dicts
 
+from core.utils import get_mapped_time_of_day_id
+
+
+async def get_link(data_type: str,
+                   measured_parameter: str,
+                   measuring_device: str,
+                   years_id: int,
+                   month_id: int,
+                   day_id: int,
+                   time_of_day: str,
+                   lst_num: int,
+                   db: AsyncSession = Depends(get_db),
+                   mapping_dicts: dict = Depends(get_mapping_dicts)
+                   ):
+    # Доступ к словарям
+    devices_dict = mapping_dicts["devices_dict"]
+    parameters_dict = mapping_dicts["parameters_dict"]
+    type_dict = mapping_dicts["type_dict"]
+
+    # get data_type_id
+    data_type_id = await get_data_type_id(db, data_type, type_dict)
+
+    # Получаем device_id
+    device_id = await get_device_id(db, measuring_device, devices_dict)
+
+    # Получаем parameter_id
+    parameter_id = await get_parameter_id(db, measured_parameter, parameters_dict)
+
+    if time_of_day:
+        try
+            times_of_day_dict = get_mapped_time_of_day_id()
+            time_of_day_id = times_of_day_dict[time_of_day]
+        except:
+            raise HTTPException(status_code=404, detail=f"incorrect time of day input")
+
+    try:
+
+        if device_id == 12:  # LANDSAT
+            # Создаем запрос с помощью select
+            stmt = select(First_sputnik_data).where(
+                First_sputnik_data.measured_parameters_id == parameter_id,
+                First_sputnik_data.data_type_id == data_type_id,
+                First_sputnik_data.measuring_devices_id == device_id,
+                First_sputnik_data.years_id == years_id,
+                First_sputnik_data.month_id == month_id,
+                First_sputnik_data.day_id == day_id,
+            )
+
+        #костыль! measured_parameters_id присваивается значение а не берется из бд, т.к. в бд параметр "LST",
+        #"среднемесячные данные" и "среднемесячные многолетние" находятся в одной таблице measured_parameters
+        #все три запроса ниже находят файл с измеряемым параметром LST, но в Second_sputnik_data и Third_sputnik_data
+        #измеряемый параметр указан среднемесячные и среднемесячные многолетние соответственно
+        #указать "среднемесячыне" и "LST" одновременно (как и есть на самом деле) невозможно т.к. оба параметра находятся в одной таблице
+
+
+        elif device_id == 10 and day_id == None and years_id == None:  # VIIRS, среднемесячные многолетние спутниковые данные
+            stmt = select(Third_sputnik_data).where(
+                Third_sputnik_data.measured_parameters_id == 14,
+                Third_sputnik_data.data_type_id == data_type_id,
+                Third_sputnik_data.measuring_devices_id == device_id,
+                Third_sputnik_data.month_id == month_id,
+            )
+
+        elif device_id == 10 and day_id == None:  # VIIRS, среднемесячные спутниковые данные
+            stmt = select(Second_sputnik_data).where(
+                Second_sputnik_data.measured_parameters_id == 13,
+                Second_sputnik_data.data_type_id == data_type_id,
+                Second_sputnik_data.measuring_devices_id == device_id,
+                Second_sputnik_data.years_id == years_id,
+                Second_sputnik_data.month_id == month_id,
+                Second_sputnik_data.times_day_id == time_of_day_id,
+            )
+
+        elif device_id == 11 and day_id == None:  # MODIS/TERRA, среднемесячные спутниковые данные
+            stmt = select(Second_sputnik_data).where(
+                Second_sputnik_data.measured_parameters_id == 13,
+                Second_sputnik_data.data_type_id == data_type_id,
+                Second_sputnik_data.measuring_devices_id == device_id,
+                Second_sputnik_data.years_id == years_id,
+                Second_sputnik_data.month_id == month_id,
+                Second_sputnik_data.times_day_id == time_of_day_id,
+            )
+
+    except:
+        raise HTTPException(status_code=404, detail=f"File not found")
+
+        # Выполняем запрос
+    result = await db.execute(stmt)
+
+    # Получаем первый результат
+    file = result.scalars().first()
+
+    if file:
+        return file.link
+    else:
+        raise HTTPException(status_code=404, detail=f"File not found")
+
 
 # Асинхронная функция для получения data_type_id
+
+
 async def get_data_type_id(db: AsyncSession, data_type: str, type_dict: dict):
     try:
 
@@ -38,7 +137,10 @@ async def get_data_type_id(db: AsyncSession, data_type: str, type_dict: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Cant find data type id: {str(e)}")
 
+
 # Асинхронная функция для получения device_id
+
+
 async def get_device_id(db: AsyncSession, measuring_device: str, devices_dict: dict):
     try:
         # Создаем запрос с помощью select
@@ -61,7 +163,10 @@ async def get_device_id(db: AsyncSession, measuring_device: str, devices_dict: d
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Cant find device id: {str(e)}")
 
+
 # Асинхронная функция для получения parameter_id
+
+
 async def get_parameter_id(db: AsyncSession, measured_parameter: str, parameters_dict: dict):
     try:
         # Создаем запрос с помощью select
@@ -85,61 +190,6 @@ async def get_parameter_id(db: AsyncSession, measured_parameter: str, parameters
         raise HTTPException(status_code=500, detail=f"Cant find parameter id: {str(e)}")
 
 
-async def get_link(data_type: str,
-             measured_parameter: str,
-             measuring_device: str,
-             years_id: int,
-             month_id: int,
-             day_id: int,
-             lst_num: int,
-             db: AsyncSession = Depends(get_db),
-             mapping_dicts: dict = Depends(get_mapping_dicts)
-):
-    # Доступ к словарям
-    devices_dict = mapping_dicts["devices_dict"]
-    parameters_dict = mapping_dicts["parameters_dict"]
-    type_dict = mapping_dicts["type_dict"]
-
-
-    # get data_type_id
-    data_type_id = await get_data_type_id(db, data_type, type_dict)
-
-    # Получаем device_id
-    device_id = await get_device_id(db, measuring_device, devices_dict)
-
-    # Получаем parameter_id
-    parameter_id = await get_parameter_id(db, measured_parameter, parameters_dict)
-
-    try:
-        if years_id == None or day_id == None:  #логика получени среднегодовых и среднемес ьез года и дня
-            raise HTTPException(status_code=404, detail=f"File not found")
-
-        else:
-            # Создаем запрос с помощью select
-            stmt = select(First_sputnik_data).where(
-                First_sputnik_data.measured_parameters_id == parameter_id,
-                First_sputnik_data.data_type_id == data_type_id,
-                First_sputnik_data.measuring_devices_id == device_id,
-                First_sputnik_data.years_id == years_id,
-                First_sputnik_data.month_id == month_id,
-                First_sputnik_data.day_id == day_id,
-            )
-    except:
-        raise HTTPException(status_code=404, detail=f"File not found")
-
-            # Выполняем запрос
-    result = await db.execute(stmt)
-
-            # Получаем первый результат
-    file = result.scalars().first()
-
-    if file:
-        return file.link
-    else:
-        raise HTTPException(status_code=404, detail=f"File not found")
-
-
-
 # Асинхронная функция для получения всех спктниковых данных
 async def get_all_first_sputnik_data(db: AsyncSession = Depends(get_db)):
     result_first = await db.execute(select(First_sputnik_data))
@@ -147,11 +197,12 @@ async def get_all_first_sputnik_data(db: AsyncSession = Depends(get_db)):
 
     return first_sputnik_data_list
 
+
 async def get_all_second_sputnik_data(db: AsyncSession = Depends(get_db)):
     result_second = await db.execute(select(Second_sputnik_data))
     second_sputnik_data_list = result_second.scalars().all()
 
-    return  second_sputnik_data_list
+    return second_sputnik_data_list
 
 
 async def get_all_third_sputnik_data(db: AsyncSession = Depends(get_db)):
