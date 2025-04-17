@@ -16,6 +16,7 @@ from core.utils import find_directory
 from db.CRUD import get_all_first_sputnik_data, get_all_second_sputnik_data, get_all_third_sputnik_data
 
 from schemas.files import FirstSputnikDataResponse, SecondSputnikDataResponse, ThirdSputnikDataResponse
+from starlette.responses import FileResponse
 
 files_router = APIRouter()
 
@@ -104,3 +105,21 @@ async def get_tiles(data_type: str,
     result = found_path + "/{z}/{x}/{-y}.png"
 
     return result
+
+
+@files_router.get("")
+async def download_file(full_path: str):
+
+
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="wrong file path")
+
+    # Get filename with extension
+    filename = os.path.basename(full_path)
+    print(filename)
+
+    return FileResponse(
+        full_path,
+        media_type="image/tiff",
+        filename=filename
+    )
