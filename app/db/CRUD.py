@@ -42,7 +42,7 @@ async def get_link(data_type: str,
     parameter_id = await get_parameter_id(db, measured_parameter, parameters_dict)
 
     if time_of_day:
-        try
+        try:
             times_of_day_dict = get_mapped_time_of_day_id()
             time_of_day_id = times_of_day_dict[time_of_day]
         except:
