@@ -108,7 +108,7 @@ async def get_tiles(data_type: str,
 
 
 @files_router.get("")
-async def download_file(full_path: str):
+async def download_satellite_data_file(full_path: str):
 
 
     if not os.path.exists(full_path):
