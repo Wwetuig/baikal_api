@@ -54,6 +54,49 @@ class Third_sputnik_data(Base):
     data_type_id = Column(Integer, index=True)
     date_range = Column(DATERANGE, index=True)
 
+class Measurement_data(Base): #ground_data
+    __tablename__ = "measurement_data"
+    __table_args__ = {"schema": "database"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    date_time = Column(Date, index=True)
+    note = Column(String, index=True)
+    data_sources_id = Column(Integer, index=True)
+    measured_parameters_id = Column(Integer, index=True)
+    measuring_devices_id = Column(Integer, index=True)
+    value = Column(Float, index=True)
+    data_type_id = Column(Integer, index=True)
+    speed = Column(Float, index=True)
+    coordinates_id = Column(Integer, index=True)
+    units_measurement_id = Column(Integer, index=True)
+
+class Data_source(Base): #ground_data
+    __tablename__ = "data_sources;"
+    __table_args__ = {"schema": "knowledgebase"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    name_organization = Column(String, index=True)
+    url = Column(String, index=True)
+    data_type_id = Column(Integer, index=True)
+
+class Coordinates(Base): #ground_data
+    __tablename__ = "coordinates"
+    __table_args__ = {"schema": "knowledgebase"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    coordinates = Column(String, index=True)
+    description = Column(String, index=True)
+
+
+class Units_measurement(Base): #ground_data
+    __tablename__ = "units_measurement"
+    __table_args__ = {"schema": "knowledgebase"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    unit = Column(String, index=True)
+    description_unit = Column(String, index=True)
+    description = Column(String, index=True)
+
 class Data_type(Base):
     __tablename__ = "data_type"
     __table_args__ = {"schema": "knowledgebase"}
