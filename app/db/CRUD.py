@@ -3,9 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_db
-from db.models import First_sputnik_data, Second_sputnik_data, Third_sputnik_data
+from db.models import First_sputnik_data, Second_sputnik_data, Third_sputnik_data, Measurement_data,Data_source
 
-from db.models import Data_type, Measuring_devices, Measured_parameters, User
+from db.models import Data_type, Measuring_devices, Measured_parameters, User, Coordinates, Units_measurement
 
 from schemas.users import UserCreate
 
@@ -14,6 +14,11 @@ from core.security import hash_password
 from core.utils import get_mapping_dicts
 
 from core.utils import get_mapped_time_of_day_id
+
+from datetime import date
+
+from sqlalchemy import func
+
 
 
 async def get_link(data_type: str,
@@ -112,8 +117,6 @@ async def get_link(data_type: str,
 
 
 # Асинхронная функция для получения data_type_id
-
-
 async def get_data_type_id(db: AsyncSession, data_type: str, type_dict: dict):
     try:
 
@@ -252,3 +255,169 @@ async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     await db.commit()
     await db.refresh(db_user)
     return db_user
+
+
+
+async def return_available_parameters_list(params: list, db: AsyncSession = Depends(get_db)):
+    result_lst = []
+
+    for param in params:
+
+        try:
+            # создание запроса
+            stmt = select(Measured_parameters.name_indicator).where(
+                Measured_parameters.id == param
+            )
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+            # Выполняем запрос
+        result = await db.execute(stmt)
+
+        # Получаем первый результат
+        data = result.scalars().first()
+
+        result_lst.append(data)
+
+    return result_lst
+
+async def get_available_parameters_by_date(startDate: date, endDate: date, db: AsyncSession = Depends(get_db)):
+    try:
+        if endDate:
+            # создание запроса
+            stmt = select(Measurement_data.measured_parameters_id).where(
+                func.date(Measurement_data.date_time).between(startDate, endDate)
+            ).distinct()
+        else:
+            stmt = select(Measurement_data.measured_parameters_id).where(
+                func.date(Measurement_data.date_time) == startDate
+            ).distinct()
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+        # Выполняем запрос
+    result = await db.execute(stmt)
+
+    # Получаем первый результат
+    data = result.scalars().all()
+
+    result_lst = await return_available_parameters_list(data, db)
+    if result_lst:
+        return result_lst
+
+async def get_available_sources_by_date(parameter: str, startDate: date, endDate: date, db: AsyncSession = Depends(get_db)):
+    try:
+        if endDate:
+            # создание запроса
+            stmt = select(Measurement_data.data_sources_id).where(
+                (func.date(Measurement_data.date_time).between(startDate, endDate)) &
+                (Measured_parameters.name_indicator == parameter)
+                # Предполагаем, что это имя столбца в таблице measured_parameters
+            ).join(Measured_parameters, Measurement_data.measured_parameters_id == Measured_parameters.id).distinct()
+        else:
+            stmt = select(Measurement_data.data_sources_id).where(
+                (func.date(Measurement_data.date_time) == startDate) &
+                (Measured_parameters.name_indicator == parameter)
+                # Предполагаем, что это имя столбца в таблице measured_parameters
+            ).join(Measured_parameters, Measurement_data.measured_parameters_id == Measured_parameters.id).distinct()
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+        # Выполняем запрос
+    result = await db.execute(stmt)
+
+    # Получаем первый результат
+    data = result.scalars().all()
+
+    result_lst = await return_available_sources_list(data, db)
+    if result_lst:
+        return result_lst
+
+
+async def return_available_sources_list(params: list, db: AsyncSession = Depends(get_db)):
+    result_lst = []
+
+    for param in params:
+
+        try:
+            # создание запроса
+            stmt = select(Data_source.name_organization).where(
+                Data_source.id == param
+            )
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+            # Выполняем запрос
+        result = await db.execute(stmt)
+
+        # Получаем первый результат
+        data = result.scalars().first()
+
+        result_lst.append(data)
+
+    return result_lst
+
+
+async def get_points_with_metadata(parameter: str, source: str, startDate: date, endDate: date, db: AsyncSession = Depends(get_db)):
+    try:
+        # создание запроса
+        if endDate:
+            stmt = (
+                select(
+                    Coordinates.coordinates,
+                    Measurement_data.value,
+                    Units_measurement.unit,
+                    Units_measurement.description_unit,
+                    Measuring_devices.name_source.label("sensor")
+                )
+                .join(Coordinates, Measurement_data.coordinates_id == Coordinates.id)
+                .join(Units_measurement, Measurement_data.units_measurement_id == Units_measurement.id)
+                .join(Measuring_devices, Measurement_data.data_sources_id == Measuring_devices.id)
+                .where(
+                    (func.date(Measurement_data.date_time).between(startDate, endDate)) &
+                    (Measured_parameters.name_indicator == parameter) &
+                    (Data_source.name_organization == source)
+                )
+                .join(Measured_parameters, Measurement_data.measured_parameters_id == Measured_parameters.id)
+                .join(Data_source, Measurement_data.data_sources_id == Data_source.id)
+            )
+        else:
+            stmt = (
+                select(
+                    Coordinates.coordinates,
+                    Measurement_data.value,
+                    Units_measurement.unit,
+                    Units_measurement.description_unit,
+                    Measuring_devices.name_source.label("sensor")
+                )
+                .join(Coordinates, Measurement_data.coordinates_id == Coordinates.id)
+                .join(Units_measurement, Measurement_data.units_measurement_id == Units_measurement.id)
+                .join(Measuring_devices, Measurement_data.data_sources_id == Measuring_devices.id)
+                .where(
+                    (func.date(Measurement_data.date_time) == startDate) &
+                    (Measured_parameters.name_indicator == parameter) &
+                    (Data_source.name_organization == source)
+                )
+                .join(Measured_parameters, Measurement_data.measured_parameters_id == Measured_parameters.id)
+                .join(Data_source, Measurement_data.data_sources_id == Data_source.id)
+            )
+
+
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+            # Выполняем запрос
+    result = await db.execute(stmt)
+
+        # Получаем первый результат
+    data = result.mappings().all()
+
+    if data:
+        return data
+    else:
+        raise HTTPException(status_code=404, detail="data not found")
