@@ -5,6 +5,7 @@ from typing import Dict
 from fastapi import APIRouter, Depends, Query, HTTPException
 
 from db.CRUD import get_link
+from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
@@ -17,6 +18,10 @@ from db.CRUD import get_all_first_sputnik_data, get_all_second_sputnik_data, get
 
 from schemas.files import FirstSputnikDataResponse, SecondSputnikDataResponse, ThirdSputnikDataResponse
 from starlette.responses import FileResponse
+
+
+from db.CRUD import get_available_parameters_by_date, get_available_sources_by_date, get_points_with_metadata
+
 
 files_router = APIRouter()
 
@@ -123,3 +128,24 @@ async def download_satellite_data_file(full_path: str):
         media_type="image/tiff",
         filename=filename
     )
+
+
+@files_router.get("/ground_data/get_available_parameters")
+async def return_available_parameters_by_date(startDate: date, endDate: date = Query(None), db: AsyncSession = Depends(get_db)):
+    '''возвращает список доступных параметров за определенную дату'''
+    data = await get_available_parameters_by_date(startDate, endDate, db)
+    return data
+
+
+@files_router.get("/ground_data/get_available_sources")
+async def return_available_source_by_date_and_parameter(parameter: str, startDate: date, endDate: date = Query(None), db: AsyncSession = Depends(get_db)):
+    '''возвращает список доступных ресурсов за определенную дату и с определенным парамтером'''
+    data = await get_available_sources_by_date(parameter, startDate, endDate, db)
+    return data
+
+@files_router.get("/ground_data/get_points")
+async def return_points_with_metadata(parameter: str, source: str,  startDate: date, endDate: date = Query(None), db: AsyncSession = Depends(get_db)):
+    '''возвращает список точек с метаданными по пределенным парамтерам'''
+    data = await get_points_with_metadata(parameter, source, startDate, endDate, db)
+    return data
+
