@@ -91,7 +91,7 @@ async def get_link(data_type: str,
                 Second_sputnik_data.times_day_id == time_of_day_id,
             )
 
-        elif device_id == 11 and day_id == None:  # MODIS/TERRA, среднемесячные спутниковые данные
+        elif (device_id == 11) or (device_id == 14)  and day_id == None:  # MODIS/TERRA, среднемесячные спутниковые данные
             stmt = select(Second_sputnik_data).where(
                 Second_sputnik_data.measured_parameters_id == 13,
                 Second_sputnik_data.data_type_id == data_type_id,
@@ -306,6 +306,8 @@ async def get_available_parameters_by_date(startDate: date, endDate: date, db: A
     result_lst = await return_available_parameters_list(data, db)
     if result_lst:
         return result_lst
+    else:
+        return []
 
 async def get_available_sources_by_date(parameter: str, startDate: date, endDate: date, db: AsyncSession = Depends(get_db)):
     try:
@@ -335,6 +337,8 @@ async def get_available_sources_by_date(parameter: str, startDate: date, endDate
     result_lst = await return_available_sources_list(data, db)
     if result_lst:
         return result_lst
+    else:
+        return []
 
 
 async def return_available_sources_list(params: list, db: AsyncSession = Depends(get_db)):

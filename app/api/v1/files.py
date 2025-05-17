@@ -79,19 +79,20 @@ async def get_tiles(data_type: str,
         # Извлечение имени файла без расширения
         filename = full_path.split('/')[-1].split('.')[0]
 
-        root_directory_landsat_8 = r"/u/product/temperatura/landsat/june/2024"
+        root_dir_aqua_monthly_avg_year_day = r"/u/product/temperatura/color_tiles/aqua/monthly_avg_year/day"
+        root_dir_aqua_monthly_avg_year_night = r"/u/product/temperatura/color_tiles/aqua/monthly_avg_year/night"
 
-        root_dir_viirs_monthly_avg_year_day = "/u/product/temperatura/tiles/viirs/monthly_avg_year/day"
-        root_dir_viirs_monthly_avg_year_night = "/u/product/temperatura/tiles/viirs/monthly_avg_year/night"
-        root_dir_viirs_monthly_avg_many_years = "/u/product/temperatura/tiles/viirs/montly_avg_many_year"
+        root_directory_landsat_8 = r"/u/product/temperatura/color_tiles/landsat/8"
 
-        root_dir_terra_monthly_avg_year_average_daily = "/u/product/temperatura/tiles/terra/monthly_avg_year/average_daily"
-        root_dir_terra_monthly_avg_year_day = "/u/product/temperatura/tiles/terra/monthly_avg_year/day"
-        root_dir_terra_monthly_avg_year_night = "/u/product/temperatura/tiles/terra/monthly_avg_year/night"
+        root_dir_terra_monthly_avg_year_average_daily = r"/u/product/temperatura/color_tiles/terra/monthly_avg_year/average_daily"
+        root_dir_terra_monthly_avg_year_day = r"/u/product/temperatura/color_tiles/terra/monthly_avg_year/day"
+        root_dir_terra_monthly_avg_year_night = r"/u/product/temperatura/color_tiles/terra/monthly_avg_year/night"
 
-        root_dir_aqua_monthly_avg_year_day = "/u/product/temperatura/tiles/aqua/monthly_avg_year/day"
-        root_dir_aqua_monthly_avg_year_night = "/u/product/temperatura/tiles/aqua/monthly_avg_year/night"
 
+        root_dir_viirs_monthly_avg_year_day = r"/u/product/temperatura/color_tiles/viirs/monthly_avg_year/day"
+        root_dir_viirs_monthly_avg_year_night = r"/u/product/temperatura/color_tiles/viirs/monthly_avg_year/night"
+
+        root_dir_viirs_monthly_avg_many_years = r"/u/product/temperatura/color_tiles/viirs/montly_avg_many_year"
         #target dir with tiles
         target_directory = filename
 
