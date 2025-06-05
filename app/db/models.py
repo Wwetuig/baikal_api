@@ -144,6 +144,15 @@ class User(Base):
     active = Column(Boolean, index=True)
     foto = Column(LargeBinary, index=True)
 
+class External_services(Base):
+    __tablename__ = "external_services"
+    __table_args__ = {"schema": "knowledgebase"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    name_service = Column(String, index=True)
+    description = Column(String, index=True)
+    url_reference = Column(String, index=True)
+
 
 
 # Создание таблиц в базе данных (если они не существуют)
