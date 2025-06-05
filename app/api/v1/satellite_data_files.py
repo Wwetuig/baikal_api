@@ -1,68 +1,66 @@
 import os
 
-from typing import Dict
-
 from fastapi import APIRouter, Depends, Query, HTTPException
 
-from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
 from db.database import get_db
 
 from core.utils import get_mapping_dicts
 from core.utils import find_directory
 
-from db.CRUD import get_all_first_sputnik_data, get_all_second_sputnik_data, get_all_third_sputnik_data
-
-from schemas.files import FirstSputnikDataResponse, SecondSputnikDataResponse, ThirdSputnikDataResponse
 from starlette.responses import FileResponse
-
-
-from db.CRUD import get_available_parameters_by_date, get_available_sources_by_date, get_points_with_metadata
 
 from db.CRUD import get_landsat_link, get_monthly_avg_file_link, get_monthly_avg_many_years_file_link
 
-satellite_data_router = APIRouter()
+from db.CRUD import get_available_dates_for_firstSD, get_available_dates_for_secondSD, get_available_dates_for_thirdSD
+
+
+
+satellite_data_router = APIRouter() # common endpoints
+satellite_data_firstSD_router = APIRouter() #landsat
+satellite_data_secondSD_router = APIRouter() #monthly avg
+satellite_data_thirdSD_router = APIRouter() #monthly_avg many years
 
 
 # роут для получения ссылки конкретного объекта из бд по параметрам
-@satellite_data_router.get('/get_landsat_link', response_model=str)
+@satellite_data_firstSD_router.get('/get_landsat_link', response_model=str)
 async def find_the_link_to_landsat_file(data_type: str,
-                                           measured_parameter: str,
-                                           measuring_device: str,
+                                           parameter: str,
+                                           device: str,
                                            month_id: int,
-                                           years_id: int = Query(None),
-                                           day_id: int = Query(None),
-                                           time_of_day: str = Query(None),
+                                           years_id: int,
+                                           day_id: int,
                                            lst_num: int = Query(None),
                                            db: AsyncSession = Depends(get_db),
                                            mapping_dicts: dict = Depends(get_mapping_dicts)):
+    '''возвращает ссылку на файл TIFF по данным для спутника Landsat'''
     response = await get_landsat_link(data_type,
-                              measured_parameter,
-                              measuring_device,
+                              parameter,
+                              device,
                               years_id,
                               month_id,
                               day_id,
-                              time_of_day,
                               lst_num,
                               db,
                               mapping_dicts)
 
     return response
 
-@satellite_data_router.get('/get_monthly_avg_file_link', response_model=str)
+@satellite_data_secondSD_router.get('/get_monthly_avg_file_link', response_model=str)
 async def find_the_link_to_monthly_avg_file(data_type: str,
-                                           measured_parameter: str,
-                                           measuring_device: str,
+                                           parameter: str,
+                                           device: str,
                                            month_id: int,
-                                           years_id: int = Query(None),
-                                           time_of_day: str = Query(None),
+                                           years_id: int,
+                                           time_of_day: str,
                                            db: AsyncSession = Depends(get_db),
                                            mapping_dicts: dict = Depends(get_mapping_dicts)):
+    '''возвращает ссылку на файл TIFF по по данным среднемесячным'''
+
     response = await get_monthly_avg_file_link(data_type,
-                              measured_parameter,
-                              measuring_device,
+                              parameter,
+                              device,
                               years_id,
                               month_id,
                               time_of_day,
@@ -72,43 +70,45 @@ async def find_the_link_to_monthly_avg_file(data_type: str,
     return response
 
 
-@satellite_data_router.get('/get_monthly_avg_many_years_file_link', response_model=str)
+@satellite_data_thirdSD_router.get('/get_monthly_avg_many_years_file_link', response_model=str)
 async def find_the_link_to_monthly_avg_many_years_file(data_type: str,
-                                           measured_parameter: str,
-                                           measuring_device: str,
+                                           parameter: str,
+                                           device: str,
                                            month_id: int,
                                            db: AsyncSession = Depends(get_db),
                                            mapping_dicts: dict = Depends(get_mapping_dicts)):
+    '''возвращает ссылку на файл TIFF по данным многолетним среднемесячным'''
+
+
     response = await get_monthly_avg_many_years_file_link(data_type,
-                              measured_parameter,
-                              measuring_device,
+                              parameter,
+                              device,
                               month_id,
                               db,
                               mapping_dicts)
 
     return response
-@satellite_data_router.get('/get_landsat_tiles')
-async def get_tiles(data_type: str,
-                    measured_parameter: str,
-                    measuring_device: str,
+@satellite_data_firstSD_router.get('/get_landsat_tiles')
+async def get_landsat_tiles(data_type: str,
+                    parameter: str,
+                    device: str,
                     month_id: int,
-                    years_id: int = Query(None),
-                    day_id: int = Query(None),
-                    time_of_day: str = Query(None),
+                    years_id: int,
+                    day_id: int,
                     lst_num: int = Query(None),
                     db: AsyncSession = Depends(get_db),
                     mapping_dicts: dict = Depends(get_mapping_dicts)):
-    """Возвращает ссылку на директорию с нарезанными тайлами. """
+    """Возвращает ссылку на директорию с нарезанными цветными тайлами для спутника Landsat"""
     full_path = await get_landsat_link(data_type,
-                               measured_parameter,
-                               measuring_device,
-                               years_id,
-                               month_id,
-                               day_id,
-                               time_of_day,
-                               lst_num,
-                               db,
-                               mapping_dicts)
+                              parameter,
+                              device,
+                              years_id,
+                              month_id,
+                              day_id,
+                              lst_num,
+                              db,
+                              mapping_dicts)
+
 
     try:
         # Извлечение имени файла без расширения
@@ -128,19 +128,19 @@ async def get_tiles(data_type: str,
 
     return result
 
-@satellite_data_router.get('/get_monthly_avg_tiles')
+@satellite_data_secondSD_router.get('/get_monthly_avg_tiles')
 async def get_monthly_avg_tiles(data_type: str,
-                    measured_parameter: str,
-                    measuring_device: str,
+                    parameter: str,
+                    device: str,
                     month_id: int,
-                    years_id: int = Query(None),
-                    time_of_day: str = Query(None),
+                    years_id: int,
+                    time_of_day: str,
                     db: AsyncSession = Depends(get_db),
                     mapping_dicts: dict = Depends(get_mapping_dicts)):
-    """Возвращает ссылку на директорию с нарезанными тайлами. """
+    """Возвращает ссылку на директорию с нарезанными цветными тайлами для среднемесячных данных"""
     full_path = await get_monthly_avg_file_link(data_type,
-                               measured_parameter,
-                               measuring_device,
+                               parameter,
+                               device,
                                years_id,
                                month_id,
                                time_of_day,
@@ -182,18 +182,20 @@ async def get_monthly_avg_tiles(data_type: str,
     return result
 
 
-@satellite_data_router.get('/get_monthly_avg_many_years_tiles')
+@satellite_data_thirdSD_router.get('/get_monthly_avg_many_years_tiles')
 async def get_monthly_avg_many_years_tiles(data_type: str,
-                    measured_parameter: str,
-                    measuring_device: str,
+                    parameter: str,
+                    device: str,
                     month_id: int,
+                    time_of_day: str,
                     db: AsyncSession = Depends(get_db),
                     mapping_dicts: dict = Depends(get_mapping_dicts)):
-    """Возвращает ссылку на директорию с нарезанными тайлами. """
-    full_path = await get_monthly_avg_file_link(data_type,
-                               measured_parameter,
-                               measuring_device,
+    """Возвращает ссылку на директорию с нарезанными цветными тайлами для многолетних среднемесячных данных"""
+    full_path = await get_monthly_avg_many_years_file_link(data_type,
+                               parameter,
+                               device,
                                month_id,
+                               time_of_day,
                                db,
                                mapping_dicts)
 
@@ -214,9 +216,9 @@ async def get_monthly_avg_many_years_tiles(data_type: str,
 
     return result
 
-@satellite_data_router.get("")
-async def download_satellite_data_file(full_path: str):
-
+@satellite_data_router.get("/download")
+async def download_satellite_data(full_path: str):
+    """скачивание TIFF файла или отдельных тайлов .png"""
 
     if not os.path.exists(full_path):
         raise HTTPException(status_code=404, detail="wrong file path")
@@ -232,22 +234,36 @@ async def download_satellite_data_file(full_path: str):
     )
 
 
-@satellite_data_router.get("/ground_data/get_available_parameters")
-async def return_available_parameters_by_date(startDate: date, endDate: date = Query(None), db: AsyncSession = Depends(get_db)):
-    '''возвращает список доступных параметров за определенную дату'''
-    data = await get_available_parameters_by_date(startDate, endDate, db)
+
+@satellite_data_firstSD_router.get('/get_available_dates_landsat')
+async def get_available_dates_landsat(data_type: str,
+                         device: str,
+                         parameter:str,
+                         lst_num: int = Query(None),
+                         db: AsyncSession = Depends(get_db),
+                         mapping_dicts: dict = Depends(get_mapping_dicts)):
+    data = await get_available_dates_for_firstSD(data_type, device, parameter,lst_num, db, mapping_dicts)
+    return data
+
+@satellite_data_secondSD_router.get('/get_available_dates_monthly_avg')
+async def get_available_dates_monthly_avg(data_type: str,
+                         device: str,
+                         parameter:str,
+                         time_of_day: str,
+                         db: AsyncSession = Depends(get_db),
+                         mapping_dicts: dict = Depends(get_mapping_dicts)):
+    data = await get_available_dates_for_secondSD(data_type, device, parameter, time_of_day, db, mapping_dicts)
+    return data
+
+@satellite_data_thirdSD_router.get('/get_available_dates_monthly_avg_many_years')
+async def get_available_dates_monthly_avg_many_years(data_type: str,
+                         device: str,
+                         parameter:str,
+                         time_of_day: str,
+                         db: AsyncSession = Depends(get_db),
+                         mapping_dicts: dict = Depends(get_mapping_dicts)):
+    data = await get_available_dates_for_thirdSD(data_type, device, parameter, time_of_day, db, mapping_dicts)
     return data
 
 
-@satellite_data_router.get("/ground_data/get_available_sources")
-async def return_available_source_by_date_and_parameter(parameter: str, startDate: date, endDate: date = Query(None), db: AsyncSession = Depends(get_db)):
-    '''возвращает список доступных ресурсов за определенную дату и с определенным парамтером'''
-    data = await get_available_sources_by_date(parameter, startDate, endDate, db)
-    return data
-
-@satellite_data_router.get("/ground_data/get_points")
-async def return_points_with_metadata(parameter: str, source: str,  startDate: date, endDate: date = Query(None), db: AsyncSession = Depends(get_db)):
-    '''возвращает список точек с метаданными по пределенным парамтерам'''
-    data = await get_points_with_metadata(parameter, source, startDate, endDate, db)
-    return data
 
