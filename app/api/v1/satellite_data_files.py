@@ -15,7 +15,7 @@ from db.CRUD import get_landsat_link, get_monthly_avg_file_link, get_monthly_avg
 
 from db.CRUD import get_available_dates_for_firstSD, get_available_dates_for_secondSD, get_available_dates_for_thirdSD
 
-
+from db.CRUD import get_temperature_by_coordinates_monthly_avg, get_temperature_by_coordinates_monthly_avg_many_years, get_temperature_by_coordinates_landsat
 
 satellite_data_router = APIRouter() # common endpoints
 satellite_data_firstSD_router = APIRouter() #landsat
@@ -128,6 +128,36 @@ async def get_landsat_tiles(data_type: str,
 
     return result
 
+
+@satellite_data_firstSD_router.get('/get_temperature_at_point_landsat', response_model=float)
+async def get_temperature_at_point_by_coordinates_landsat(data_type: str,
+                                           parameter: str,
+                                           device: str,
+                                           years_id: int,
+                                           month_id: int,
+                                           day_id: int,
+                                           lon: float,
+                                           lat: float,
+                                           lst_num: int = Query(None),
+                                           db: AsyncSession = Depends(get_db),
+                                           mapping_dicts: dict = Depends(get_mapping_dicts)):
+
+    '''возвращает ссылку на файл TIFF по по данным среднемесячным'''
+
+    response = await get_temperature_at_point_by_coordinates_landsat(data_type,
+                                                    parameter,
+                                                    device,
+                                                    years_id,
+                                                    month_id,
+                                                    day_id,
+                                                    lst_num,
+                                                    lon,
+                                                    lat,
+                                                    db,
+                                                    mapping_dicts)
+
+    return response
+
 @satellite_data_secondSD_router.get('/get_monthly_avg_tiles')
 async def get_monthly_avg_tiles(data_type: str,
                     parameter: str,
@@ -181,6 +211,32 @@ async def get_monthly_avg_tiles(data_type: str,
 
     return result
 
+@satellite_data_secondSD_router.get('/get_temperature_at_point_monthly_avg', response_model=float)
+async def get_temperature_at_point_by_coordinates_monthly_avg(data_type: str,
+                                           parameter: str,
+                                           device: str,
+                                           month_id: int,
+                                           years_id: int,
+                                           time_of_day: str,
+                                           lon: float,
+                                           lat: float,
+                                           db: AsyncSession = Depends(get_db),
+                                           mapping_dicts: dict = Depends(get_mapping_dicts)):
+    '''возвращает ссылку на файл TIFF по по данным среднемесячным'''
+
+    response = await get_temperature_by_coordinates_monthly_avg(data_type,
+                                                    parameter,
+                                                    device,
+                                                    years_id,
+                                                    month_id,
+                                                    time_of_day,
+                                                    lon,
+                                                    lat,
+                                                    db,
+                                                    mapping_dicts)
+
+    return response
+
 
 @satellite_data_thirdSD_router.get('/get_monthly_avg_many_years_tiles')
 async def get_monthly_avg_many_years_tiles(data_type: str,
@@ -215,6 +271,32 @@ async def get_monthly_avg_many_years_tiles(data_type: str,
     result = found_path + "/{z}/{x}/{-y}.png"
 
     return result
+
+
+@satellite_data_thirdSD_router.get('/get_temperature_at_point_monthly_avg_many_years', response_model=float)
+async def get_temperature_at_point_by_coordinates_monthly_avg_many_years(data_type: str,
+                                           parameter: str,
+                                           device: str,
+                                           month_id: int,
+                                           time_of_day: str,
+                                           lon: float,
+                                           lat: float,
+                                           db: AsyncSession = Depends(get_db),
+                                           mapping_dicts: dict = Depends(get_mapping_dicts)):
+    '''возвращает ссылку на файл TIFF по по данным среднемесячным'''
+
+    response = await get_temperature_by_coordinates_monthly_avg_many_years(data_type,
+                                                    parameter,
+                                                    device,
+                                                    month_id,
+                                                    time_of_day,
+                                                    lon,
+                                                    lat,
+                                                    db,
+                                                    mapping_dicts)
+
+    return response
+
 
 @satellite_data_router.get("/download")
 async def download_satellite_data(full_path: str):

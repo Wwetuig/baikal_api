@@ -21,6 +21,8 @@ from sqlalchemy import func
 
 from db.models import External_services
 
+from core.utils import get_temperature_list_with_coordinates
+
 
 async def get_landsat_link(data_type: str,
                            measured_parameter: str,
@@ -799,5 +801,106 @@ async def get_available_dates_for_ground_data(db: AsyncSession = Depends(get_db)
         result_lst.append(i["date"])
 
     return result_lst
+
+async def get_temperature_by_coordinates_monthly_avg(data_type: str,
+                                    measured_parameter: str,
+                                    measuring_device: str,
+                                    years_id: int,
+                                    month_id: int,
+                                    time_of_day: str,
+                                    lon: float,
+                                    lat: float,
+                                    db: AsyncSession = Depends(get_db),
+                                    mapping_dicts: dict = Depends(get_mapping_dicts)
+                                    ):
+    link = await get_monthly_avg_file_link(data_type,
+                                    measured_parameter,
+                                    measuring_device,
+                                    years_id,
+                                    month_id,
+                                    time_of_day,
+                                    db,
+                                    mapping_dicts)
+
+
+
+
+    temperature_data = get_temperature_list_with_coordinates(link)
+
+    target_lon, target_lat = lon, lat
+
+    target_temp = temperature_data.get((target_lon, target_lat), "Координаты не найдены")
+
+    return target_temp
+
+
+async def get_temperature_by_coordinates_landsat(data_type: str,
+                                                 measured_parameter: str,
+                                                 measuring_device: str,
+                                                 years_id: int,
+                                                 month_id: int,
+                                                 day_id: int,
+                                                 lst_num: int,
+                                                 lon: float,
+                                                 lat: float,
+                                                 db: AsyncSession = Depends(get_db),
+                                                 mapping_dicts: dict = Depends(get_mapping_dicts)
+                                                 ):
+    link = await get_landsat_link(data_type,
+                                  measured_parameter,
+                                  measuring_device,
+                                  years_id,
+                                  month_id,
+                                  day_id,
+                                  db,
+                                  mapping_dicts)
+
+
+
+
+    temperature_data = get_temperature_list_with_coordinates(link)
+
+    target_lon, target_lat = lon, lat
+
+    target_temp = temperature_data.get((target_lon, target_lat), "Координаты не найдены")
+
+    return target_temp
+
+
+async def get_temperature_by_coordinates_monthly_avg_many_years(data_type: str,
+                                               measured_parameter: str,
+                                               measuring_device: str,
+                                               month_id: int,
+                                               time_of_day: str,
+                                               lon: float,
+                                               lat: float,
+                                               db: AsyncSession = Depends(get_db),
+                                               mapping_dicts: dict = Depends(get_mapping_dicts)
+                                               ):
+    link = await get_monthly_avg_many_years_file_link(data_type,
+                                    measured_parameter,
+                                    measuring_device,
+                                    month_id,
+                                    time_of_day,
+                                    db,
+                                    mapping_dicts)
+
+
+
+
+    temperature_data = get_temperature_list_with_coordinates(link)
+
+    target_lon, target_lat = lon, lat
+
+    target_temp = temperature_data.get((target_lon, target_lat), HTTPException(status_code=404, detail=f"Coordinates not found"))
+
+    return target_temp
+
+
+
+
+
+
+
 
 
