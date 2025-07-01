@@ -23,6 +23,15 @@ from db.models import External_services
 
 from core.utils import get_temperature_list_with_coordinates
 
+from core.security import oauth2_scheme
+from starlette import status
+
+from core.security import verify_token
+
+from db.models import Publications
+
+from db.models import Role
+
 
 async def get_landsat_link(data_type: str,
                            measured_parameter: str,
@@ -501,7 +510,60 @@ async def get_user_by_login(login: str, db: AsyncSession = Depends(get_db)):
 
     # Получаем первый результат
     user = result.scalars().first()
+
     return user
+
+
+async def get_user_by_id(id: int, db: AsyncSession = Depends(get_db)):
+    # Создаем запрос с помощью select
+    stmt = select(User).where(User.id == id)
+
+    # Выполняем запрос
+    result = await db.execute(stmt)
+
+    # Получаем первый результат
+    user = result.scalars().first()
+    return user
+
+
+async def get_current_active_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
+    """
+    Зависимость для получения текущего активного пользователя
+
+    1. Декодирует JWT токен
+    2. Проверяет валидность токена
+    3. Возвращает пользователя из БД
+    4. Проверяет что пользователь активен
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    payload = verify_token(token)
+    login = payload.get("sub")
+
+    # Здесь должна быть ваша функция для получения пользователя из БД
+    user = await get_user_by_login(login, db)
+
+    if user is None:
+        raise credentials_exception
+
+    stmt = select(Role.role_name).where(Role.id == user.roles_id)
+
+    # Выполняем запрос
+    result = await db.execute(stmt)
+
+    # Получаем первый результат
+    role = result.scalars().first()
+
+    print(f"user {user} \nrole {role}")
+
+    # if not user.active:
+    #    raise HTTPException(status_code=400, detail="Inactive user")
+
+    return user, role
 
 
 async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
@@ -534,7 +596,7 @@ async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
         phone_number=user.phone_number,
         roles_id=default_role_id,
         locked=False,
-        active=False
+        active=True
     )
 
     # Добавляем пользователя в базу данных
@@ -802,32 +864,33 @@ async def get_available_dates_for_ground_data(db: AsyncSession = Depends(get_db)
 
     return result_lst
 
+
 async def get_temperature_by_coordinates_monthly_avg(data_type: str,
-                                    measured_parameter: str,
-                                    measuring_device: str,
-                                    years_id: int,
-                                    month_id: int,
-                                    time_of_day: str,
-                                    lon: float,
-                                    lat: float,
-                                    db: AsyncSession = Depends(get_db),
-                                    mapping_dicts: dict = Depends(get_mapping_dicts)
-                                    ):
+                                                     measured_parameter: str,
+                                                     measuring_device: str,
+                                                     years_id: int,
+                                                     month_id: int,
+                                                     time_of_day: str,
+                                                     lon: float,
+                                                     lat: float,
+                                                     db: AsyncSession = Depends(get_db),
+                                                     mapping_dicts: dict = Depends(get_mapping_dicts)
+                                                     ):
     link = await get_monthly_avg_file_link(data_type,
-                                    measured_parameter,
-                                    measuring_device,
-                                    years_id,
-                                    month_id,
-                                    time_of_day,
-                                    db,
-                                    mapping_dicts)
-
-
-
+                                           measured_parameter,
+                                           measuring_device,
+                                           years_id,
+                                           month_id,
+                                           time_of_day,
+                                           db,
+                                           mapping_dicts)
 
     temperature_data = get_temperature_list_with_coordinates(link)
 
     target_lon, target_lat = lon, lat
+
+    print(f"{target_lon}    {target_lat}")
+    print(f"Пример координат из набора: {list(temperature_data.keys())[:5]}")
 
     target_temp = temperature_data.get((target_lon, target_lat), "Координаты не найдены")
 
@@ -855,9 +918,6 @@ async def get_temperature_by_coordinates_landsat(data_type: str,
                                   db,
                                   mapping_dicts)
 
-
-
-
     temperature_data = get_temperature_list_with_coordinates(link)
 
     target_lon, target_lat = lon, lat
@@ -868,39 +928,82 @@ async def get_temperature_by_coordinates_landsat(data_type: str,
 
 
 async def get_temperature_by_coordinates_monthly_avg_many_years(data_type: str,
-                                               measured_parameter: str,
-                                               measuring_device: str,
-                                               month_id: int,
-                                               time_of_day: str,
-                                               lon: float,
-                                               lat: float,
-                                               db: AsyncSession = Depends(get_db),
-                                               mapping_dicts: dict = Depends(get_mapping_dicts)
-                                               ):
+                                                                measured_parameter: str,
+                                                                measuring_device: str,
+                                                                month_id: int,
+                                                                time_of_day: str,
+                                                                lon: float,
+                                                                lat: float,
+                                                                db: AsyncSession = Depends(get_db),
+                                                                mapping_dicts: dict = Depends(get_mapping_dicts)
+                                                                ):
     link = await get_monthly_avg_many_years_file_link(data_type,
-                                    measured_parameter,
-                                    measuring_device,
-                                    month_id,
-                                    time_of_day,
-                                    db,
-                                    mapping_dicts)
-
-
-
+                                                      measured_parameter,
+                                                      measuring_device,
+                                                      month_id,
+                                                      time_of_day,
+                                                      db,
+                                                      mapping_dicts)
 
     temperature_data = get_temperature_list_with_coordinates(link)
 
     target_lon, target_lat = lon, lat
 
-    target_temp = temperature_data.get((target_lon, target_lat), HTTPException(status_code=404, detail=f"Coordinates not found"))
+    print(f"{target_lon}    {target_lat}")
+    print(f"Пример координат из набора: {list(temperature_data.keys())[:5]}")
+
+    target_temp = temperature_data.get((target_lon, target_lat), "Координаты не найдены")
 
     return target_temp
 
 
+async def get_publications(db: AsyncSession = Depends(get_db)):
+    try:
+        stmt = (
+            select(
+                Publications.id,
+                Publications.title,
+                Publications.description,
+                Publications.authors,
+                Publications.url_path,
+                Publications.url_server,
+            )
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+        # Выполняем запрос
+    result = await db.execute(stmt)
+
+    # Получаем первый результат
+    data = result.mappings().all()
+
+    if data:
+        return data
+    else:
+        raise HTTPException(status_code=404, detail="data not found")
 
 
+async def get_publication(id: int, db: AsyncSession = Depends(get_db)):
+    try:
+        # Создаем запрос с помощью select
+        stmt = select(Publications).where(Publications.id == id)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+        # Выполняем запрос
+    result = await db.execute(stmt)
+
+    # Получаем первый результат
+    user = result.scalars().first()
+
+    if user:
+        return user
+    else:
+        raise HTTPException(status_code=404, detail="data not found")
 
 
-
-
-
+# на данном хтапе разработки в бд нет информации о проекте
+async def get_info_about_project():
+    return {"о проекте"}
