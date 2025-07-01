@@ -1,6 +1,7 @@
 from typing import Optional
 
 from pydantic import BaseModel
+from datetime import date
 
 
 class UserCreate(BaseModel):
@@ -9,6 +10,16 @@ class UserCreate(BaseModel):
     login: str
     mail: str
     phone_number: str
+
+class UserProfile(BaseModel):
+    fio: str
+    login: str
+    mail: str
+    phone_number: str
+    date_created: date
+    roles: list
+    locked: bool
+
 
 
 class UserOut(BaseModel):
