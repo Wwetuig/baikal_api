@@ -129,7 +129,7 @@ async def get_landsat_tiles(data_type: str,
     return result
 
 
-@satellite_data_firstSD_router.get('/get_temperature_at_point_landsat', response_model=float)
+@satellite_data_firstSD_router.get('/get_temperature_at_point_landsat')
 async def get_temperature_at_point_by_coordinates_landsat(data_type: str,
                                            parameter: str,
                                            device: str,
@@ -211,7 +211,7 @@ async def get_monthly_avg_tiles(data_type: str,
 
     return result
 
-@satellite_data_secondSD_router.get('/get_temperature_at_point_monthly_avg', response_model=float)
+@satellite_data_secondSD_router.get('/get_temperature_at_point_monthly_avg')
 async def get_temperature_at_point_by_coordinates_monthly_avg(data_type: str,
                                            parameter: str,
                                            device: str,
@@ -272,8 +272,8 @@ async def get_monthly_avg_many_years_tiles(data_type: str,
 
     return result
 
-
-@satellite_data_thirdSD_router.get('/get_temperature_at_point_monthly_avg_many_years', response_model=float)
+from decimal import Decimal
+@satellite_data_thirdSD_router.get('/get_temperature_at_point_monthly_avg_many_years')
 async def get_temperature_at_point_by_coordinates_monthly_avg_many_years(data_type: str,
                                            parameter: str,
                                            device: str,

@@ -71,7 +71,7 @@ class Measurement_data(Base): #ground_data
     units_measurement_id = Column(Integer, index=True)
 
 class Data_source(Base): #ground_data
-    __tablename__ = "data_sources;"
+    __tablename__ = "data_sources"
     __table_args__ = {"schema": "knowledgebase"}
 
     id = Column(Integer, primary_key=True, index=True)
@@ -144,6 +144,14 @@ class User(Base):
     active = Column(Boolean, index=True)
     foto = Column(LargeBinary, index=True)
 
+class Role(Base):
+    __tablename__ = "roles"
+    __table_args__ = {"schema": "users"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    role_name = Column(String, index=True)
+    description = Column(String, index=True)
+
 class External_services(Base):
     __tablename__ = "external_services"
     __table_args__ = {"schema": "knowledgebase"}
@@ -153,6 +161,18 @@ class External_services(Base):
     description = Column(String, index=True)
     url_reference = Column(String, index=True)
 
+class Publications(Base):
+    __tablename__ = "publications"
+    __table_args__ = {"schema": "knowledgebase"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    description = Column(String, index=True)
+    authors = Column(String, index=True)
+    url_path = Column(String, index=True)
+    doi = Column(String, index=True)
+    document = Column(String, index=True)
+    url_server = Column(String, index=True)
 
 
 # Создание таблиц в базе данных (если они не существуют)
