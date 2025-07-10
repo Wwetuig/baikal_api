@@ -885,14 +885,7 @@ async def get_temperature_by_coordinates_monthly_avg(data_type: str,
                                            db,
                                            mapping_dicts)
 
-    temperature_data = get_temperature_list_with_coordinates(link)
-
-    target_lon, target_lat = lon, lat
-
-    print(f"{target_lon}    {target_lat}")
-    print(f"Пример координат из набора: {list(temperature_data.keys())[:5]}")
-
-    target_temp = temperature_data.get((target_lon, target_lat), "Координаты не найдены")
+    target_temp = get_temperature_list_with_coordinates(link, lon, lat)
 
     return target_temp
 
@@ -918,11 +911,7 @@ async def get_temperature_by_coordinates_landsat(data_type: str,
                                   db,
                                   mapping_dicts)
 
-    temperature_data = get_temperature_list_with_coordinates(link)
-
-    target_lon, target_lat = lon, lat
-
-    target_temp = temperature_data.get((target_lon, target_lat), "Координаты не найдены")
+    target_temp = get_temperature_list_with_coordinates(link, lon, lat)
 
     return target_temp
 
@@ -945,16 +934,11 @@ async def get_temperature_by_coordinates_monthly_avg_many_years(data_type: str,
                                                       db,
                                                       mapping_dicts)
 
-    temperature_data = get_temperature_list_with_coordinates(link)
-
-    target_lon, target_lat = lon, lat
-
-    print(f"{target_lon}    {target_lat}")
-    print(f"Пример координат из набора: {list(temperature_data.keys())[:5]}")
-
-    target_temp = temperature_data.get((target_lon, target_lat), "Координаты не найдены")
+    target_temp = get_temperature_list_with_coordinates(link, lon, lat)
 
     return target_temp
+
+
 
 
 async def get_publications(db: AsyncSession = Depends(get_db)):

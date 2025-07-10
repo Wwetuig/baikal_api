@@ -1,12 +1,12 @@
 # маппинг словарей DI
 # {parameter_from_the_frontend: real_name_in_the_database}
 import os
+from math import sqrt
 
 import rasterio
 import numpy as np
 from rasterio.warp import transform as warp_transform
 from rasterio.windows import Window
-
 
 type_dict = {
     "Озеро Байкал": "Спутниковые данные",
@@ -36,6 +36,7 @@ def get_mapping_dicts():
         "parameters_dict": parameters_dict
     }
 
+
 def get_mapped_time_of_day_id():
     return {"Дневные": 1,
             "Ночные": 2,
@@ -51,52 +52,38 @@ def find_directory(root_dir, target_dir):
             return item_path
     return None  # Если не найдено
 
-def get_temperature_list_with_coordinates(tiff_path: str):
 
+import numpy as np
+import rasterio
+from rasterio.warp import transform as warp_transform
+from math import sqrt
+
+
+def get_temperature_list_with_coordinates(tiff_path: str, target_lon: float, target_lat: float):
     def extract_temperature_data(tiff_path, band_number=None):
         """
         Извлекает температурные данные из TIFF-файла.
-
-        Args:
-            tiff_path (str): Путь к TIFF-файлу
-            band_number (int, optional): Номер канала с температурой. Если None, будет попытка автоматического определения.
-
-        Returns:
-            dict: Словарь {(долгота, широта): температура}
-            int: Номер использованного канала
         """
         with rasterio.open(tiff_path) as src:
-            # Определение канала с температурой
             if band_number is None:
                 band_number = detect_temperature_band(src)
                 print(f"Используется канал {band_number} для температурных данных")
 
-            # Чтение данных
             band_data = src.read(band_number)
-
-            # Получение координат
             height, width = band_data.shape
             result = {}
 
             for y in range(height):
                 for x in range(width):
                     temp_value = band_data[y, x]
-                    # Проверяем, что значение не является nodata и не nan
                     if not np.isnan(temp_value) and temp_value != src.nodata:
-                        # Получаем координаты для текущего пикселя
                         lon, lat = pixel_to_lonlat(x, y, src.transform, src.crs)
-                        # Используем кортеж в качестве ключа
-                        result[(round(lon, 4), round(lat, 4))] = float(temp_value)
-
+                        result[(lon, lat)] = float(temp_value)
             return result, band_number
-
 
     def pixel_to_lonlat(x, y, affine_transform, src_crs):
         """Преобразует координаты пикселя в долготу/широту"""
-        # Получаем координаты в исходной проекции
         easting, northing = affine_transform * (x, y)
-
-        # Преобразуем в WGS84 (lon/lat)
         lon, lat = warp_transform(
             src_crs,
             'EPSG:4326',
@@ -122,7 +109,6 @@ def get_temperature_list_with_coordinates(tiff_path: str):
                 'mean': np.mean(valid_data)
             }
 
-            # Критерии для температурного канала
             if stats['unique'] > 50 and 0 < stats['range'][1] <= 100:
                 candidates.append(stats)
 
@@ -133,4 +119,24 @@ def get_temperature_list_with_coordinates(tiff_path: str):
 
     temperature_data, used_band = extract_temperature_data(tiff_path)
 
-    return temperature_data
+    min_distance = float('inf')
+    nearest_temp = None
+    nearest_coords = None
+
+    for (lon, lat), temp in temperature_data.items():
+        distance = sqrt((lon - target_lon) ** 2 + (lat - target_lat) ** 2)
+
+        if distance < min_distance:
+            min_distance = distance
+            nearest_temp = temp
+            nearest_coords = (lon, lat)
+
+    print(f"Минимальное расстояние = {min_distance} градусов")
+    print(f"Ближайшие координаты = {nearest_coords}")
+
+    # Возвращаем None если ближайшая точка дальше 0.1 градуса
+    if min_distance > 0.1:
+        print("Ближайшая точка находится слишком далеко (> 0.1 градуса)")
+        return None
+
+    return nearest_temp
