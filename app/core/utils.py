@@ -1,6 +1,7 @@
 # маппинг словарей DI
 # {parameter_from_the_frontend: real_name_in_the_database}
 import os
+from datetime import datetime, date
 from math import sqrt
 
 import rasterio
@@ -140,3 +141,11 @@ def get_temperature_list_with_coordinates(tiff_path: str, target_lon: float, tar
         return None
 
     return nearest_temp
+
+
+def parse_date_str(date_str: str) -> date:
+    date_str = date_str.replace('.', '-')
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Неверный формат даты: {date_str}. Ожидается ГГГГ-ММ-ДД")
